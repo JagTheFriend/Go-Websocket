@@ -49,7 +49,21 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 		msg := buf[:n]
 		log.Println("Received message: ", string(msg))
 		// It sends a "Hello from server" message back to the client.
-		ws.Write([]byte("Hello from server"))
+		// ws.Write([]byte("Hello from server"))
+
+		// Let everyone know that user sent a message
+		s.broadcast(msg)
+	}
+}
+
+func (s *Server) broadcast(b []byte) {
+	// For each connection, it launches a goroutine to send the message asynchronously.
+	for ws := range s.conns {
+		go func(ws *websocket.Conn) {
+			if _, err := ws.Write(b); err != nil {
+				log.Println("Error sending message: ", err)
+			}
+		}(ws)
 	}
 }
 
