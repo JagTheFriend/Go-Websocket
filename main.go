@@ -12,6 +12,10 @@ type Server struct {
 	conns map[*websocket.Conn]bool
 }
 
+/**
+ * It initializes the server with an empty map of connections.
+ * Returns a pointer to the newly created Server.
+ */
 func NewServer() *Server {
 	return &Server{
 		conns: make(map[*websocket.Conn]bool),
@@ -20,13 +24,16 @@ func NewServer() *Server {
 
 func (s *Server) handleWS(ws *websocket.Conn) {
 	log.Println("New connection from client: ", ws.RemoteAddr())
+	// It adds the connection to the server's conns map.
 	s.conns[ws] = true
+	// It then calls the readLoop method to start reading messages from the client.
 	s.readLoop(ws)
 }
 
 func (s *Server) readLoop(ws *websocket.Conn) {
 	buf := make([]byte, 1024)
 	for {
+		// It continues reading until an error occurs or the connection is closed.
 		n, err := ws.Read(buf)
 		if err != nil {
 			// The connection on the client side has closed
@@ -41,12 +48,15 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 		// Only the get the amount of buffer used
 		msg := buf[:n]
 		log.Println("Received message: ", string(msg))
+		// It sends a "Hello from server" message back to the client.
 		ws.Write([]byte("Hello from server"))
 	}
 }
 
 func main() {
 	server := NewServer()
+	// Handle WebSocket requests on the "/ws" route using the server's handleWS method.
 	http.Handle("/ws", websocket.Handler(server.handleWS))
+	// Start the server and listen for incoming HTTP requests on port 3000.
 	http.ListenAndServe(":3000", nil)
 }
