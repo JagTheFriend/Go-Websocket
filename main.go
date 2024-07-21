@@ -1,15 +1,29 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
+	"math/rand/v2"
 	"net/http"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
 
 type Server struct {
 	conns map[*websocket.Conn]bool
+}
+
+func (s *Server) simpleFeed(ws *websocket.Conn) {
+	log.Println("New connection from client to simpleFeed: ", ws.RemoteAddr())
+	for {
+		// Send a random number between 0 and 100 and unix time
+		playload := fmt.Sprintf("Simple Feed: Selected Number -> %d, Current Unix Time -> %d\n", rand.IntN(100), time.Now().Unix())
+		ws.Write([]byte(playload))
+		// Send message every 2 seconds
+		time.Sleep(time.Second * 2)
+	}
 }
 
 /**
@@ -71,6 +85,7 @@ func main() {
 	server := NewServer()
 	// Handle WebSocket requests on the "/ws" route using the server's handleWS method.
 	http.Handle("/ws", websocket.Handler(server.handleWS))
+	http.Handle("/ws/feed", websocket.Handler(server.simpleFeed))
 	// Start the server and listen for incoming HTTP requests on port 3000.
 	http.ListenAndServe(":3000", nil)
 }
